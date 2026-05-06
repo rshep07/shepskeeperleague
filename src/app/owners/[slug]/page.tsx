@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // Phase 1: GM slug == franchise slug. Owner page mirrors franchise page with GM framing.
 import { notFound, redirect } from "next/navigation";
 import { getFranchiseBySlug } from "@/lib/queries/franchises";

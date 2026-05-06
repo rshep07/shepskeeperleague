@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getAllChampions } from "@/lib/queries/champions";
 
 export default async function ChampionsPage() {
