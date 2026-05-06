@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { getFranchiseBySlug } from "@/lib/queries/franchises";
+import { Accordion } from "@/components/Accordion";
 import Link from "next/link";
 
 function ordinal(n: number): string {
@@ -42,13 +43,13 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
     keepersBySeason[y].push(k);
   }
 
-  // Group teamSeasons by year
+  // Index teamSeasons by year
   const teamSeasonByYear: Record<string, typeof franchise.teamSeasons[0]> = {};
   for (const ts of franchise.teamSeasons) {
     teamSeasonByYear[ts.season.yearLabel] = ts;
   }
 
-  // Deduplicate trades, group by season
+  // Deduplicate and group trades by season
   const tradeMap = new Map<string, (typeof franchise.tradeSides)[0]["trade"]>();
   for (const side of franchise.tradeSides) {
     if (!tradeMap.has(side.trade.id)) tradeMap.set(side.trade.id, side.trade);
@@ -60,24 +61,7 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
     tradesBySeason[y].push(trade);
   }
 
-  // Build team name lookup per season for trade cards
-  const teamNamesBySeasonAndFranchise: Record<string, Record<string, string>> = {};
-  for (const trade of tradeMap.values()) {
-    const y = trade.season.yearLabel;
-    if (!teamNamesBySeasonAndFranchise[y]) teamNamesBySeasonAndFranchise[y] = {};
-    for (const side of trade.sides) {
-      // We don't have season teamNames here, use empty for now
-      teamNamesBySeasonAndFranchise[y][side.franchiseId] = "";
-    }
-  }
-  // Fill in this franchise's own team names
-  for (const ts of franchise.teamSeasons) {
-    const y = ts.season.yearLabel;
-    if (!teamNamesBySeasonAndFranchise[y]) teamNamesBySeasonAndFranchise[y] = {};
-    teamNamesBySeasonAndFranchise[y][franchise.id] = ts.teamName;
-  }
-
-  // All unique season years, descending
+  // All unique years descending
   const allYears = [...new Set([
     ...franchise.teamSeasons.map(ts => ts.season.yearLabel),
     ...Object.keys(keepersBySeason),
@@ -94,11 +78,10 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
         const trades = (tradesBySeason[year] ?? []).sort((a, b) =>
           a.createdAt.getTime() - b.createdAt.getTime()
         );
-        const teamNames = teamNamesBySeasonAndFranchise[year] ?? {};
 
         return (
-          <div key={year} className="space-y-0">
-            {/* Season label */}
+          <div key={year}>
+            {/* Year header */}
             <div className="flex items-center gap-3 mb-2">
               <Link href={`/seasons/${year}`} className="text-gold-400 font-bold text-lg hover:underline">
                 {year}
@@ -111,24 +94,19 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
               )}
             </div>
 
-            <div className="card divide-y divide-rink-700">
-              {/* Season result */}
+            <div className="card divide-y divide-rink-700 overflow-hidden">
+              {/* Season result row */}
               {ts && (
                 <div className="px-5 py-3 flex items-center gap-6 text-sm">
-                  <span className="text-ice-100 font-medium">{ts.rank ? ordinal(ts.rank) : "—"}</span>
+                  <span className="text-ice-100 font-semibold">{ts.rank ? ordinal(ts.rank) : "—"}</span>
                   {ts.points && <span className="text-ice-200">{ts.points} pts</span>}
-                  <span className="text-ice-300 text-xs">{ts.teamName}</span>
+                  <span className="text-ice-300 text-xs italic">{ts.teamName}</span>
                 </div>
               )}
 
-              {/* Keepers */}
+              {/* Keepers accordion */}
               {keepers.length > 0 && (
-                <div className="px-5 py-4">
-                  <div className="text-xs uppercase tracking-wider text-ice-400 mb-3">
-                    <Link href={`/keepers/${year}`} className="hover:text-ice-200 transition-colors">
-                      Keepers
-                    </Link>
-                  </div>
+                <Accordion title="Keepers" count={keepers.length}>
                   <div className="flex flex-wrap gap-2">
                     {sortKeepers(keepers).map((k) => (
                       <span key={k.id} className={`px-2 py-1 rounded text-sm ${positionStyle(k.position)}`}>
@@ -136,23 +114,23 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                       </span>
                     ))}
                   </div>
-                </div>
+                </Accordion>
               )}
 
-              {/* Trades */}
+              {/* Trades accordion */}
               {trades.length > 0 && (
-                <div className="px-5 py-4">
-                  <div className="text-xs uppercase tracking-wider text-ice-400 mb-3">
-                    <Link href={`/trades/${year}`} className="hover:text-ice-200 transition-colors">
-                      Trades
-                    </Link>
-                  </div>
+                <Accordion title="Trades" count={trades.filter(t => !t.isVetoed).length}>
                   <div className="space-y-3">
                     {trades.map((trade) => {
-                      // Always put this franchise on the left
-                      const mySide = trade.sides.find((s) => s.franchiseId === franchise.id);
-                      const otherSide = trade.sides.find((s) => s.franchiseId !== franchise.id);
+                      const mySide = trade.sides.find(s => s.franchiseId === franchise.id);
+                      const otherSide = trade.sides.find(s => s.franchiseId !== franchise.id);
                       if (!mySide || !otherSide) return null;
+
+                      // Build team name lookup from this trade's season teamSeasons
+                      const teamNames: Record<string, string> = {};
+                      for (const sts of trade.season.teamSeasons ?? []) {
+                        teamNames[sts.franchiseId] = sts.teamName;
+                      }
 
                       return (
                         <div
@@ -165,12 +143,15 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                             </div>
                           )}
                           <div className="grid grid-cols-2 divide-x divide-rink-700">
+                            {/* My side — always left */}
                             <div className="p-3">
                               <div className="text-xs font-bold text-ice-50 uppercase tracking-wide">
                                 {franchise.gmName}
                               </div>
                               {teamNames[franchise.id] && (
-                                <div className="text-xs text-ice-300 mt-0.5">{teamNames[franchise.id]}</div>
+                                <div className="text-xs text-ice-300 mt-0.5 mb-1 italic">
+                                  {teamNames[franchise.id]}
+                                </div>
                               )}
                               <div className="text-xs text-ice-400 uppercase tracking-wider mt-2 mb-1">received</div>
                               <div className="space-y-0.5">
@@ -179,6 +160,7 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                                 ))}
                               </div>
                             </div>
+                            {/* Other side — always right */}
                             <div className="p-3">
                               <Link
                                 href={`/owners/${otherSide.franchise.slug}`}
@@ -186,6 +168,11 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                               >
                                 {otherSide.franchise.gmName}
                               </Link>
+                              {teamNames[otherSide.franchiseId] && (
+                                <div className="text-xs text-ice-300 mt-0.5 mb-1 italic">
+                                  {teamNames[otherSide.franchiseId]}
+                                </div>
+                              )}
                               <div className="text-xs text-ice-400 uppercase tracking-wider mt-2 mb-1">received</div>
                               <div className="space-y-0.5">
                                 {mySide.players.map((p) => (
@@ -198,7 +185,7 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                       );
                     })}
                   </div>
-                </div>
+                </Accordion>
               )}
             </div>
           </div>

@@ -22,7 +22,13 @@ export async function getFranchiseBySlug(slug: string) {
         include: {
           trade: {
             include: {
-              season: true,
+              season: {
+                include: {
+                  teamSeasons: {
+                    select: { franchiseId: true, teamName: true },
+                  },
+                },
+              },
               sides: {
                 include: { franchise: true },
               },
