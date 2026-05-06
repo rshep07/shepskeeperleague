@@ -36,7 +36,8 @@ export default async function SeasonPage({ params }: { params: Promise<{ year: s
                     {ts.rank ?? "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="font-semibold text-ice-50">{ts.franchise.gmName}</div>
+                    <div className="font-semibold text-ice-50">{ts.teamName}</div>
+                    <div className="text-xs text-ice-200">{ts.franchise.gmName}</div>
                   </td>
                   <td className="px-4 py-3 text-right text-ice-50 font-mono">
                     {ts.points ?? "—"}

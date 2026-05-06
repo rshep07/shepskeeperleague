@@ -21,6 +21,8 @@ function positionBadge(position: string | null) {
   }
 }
 
+const posOrder = { F: 0, D: 1, G: 2 } as const;
+
 export default async function KeepersByYearPage({ params }: { params: Promise<{ year: string }> }) {
   const { year } = await params;
 
@@ -29,6 +31,23 @@ export default async function KeepersByYearPage({ params }: { params: Promise<{ 
 
   const keepers = await getKeepersBySeason(year);
 
+  // No keeper data yet for this season
+  if (keepers.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-ice-50">{year} Keepers</h1>
+          <p className="text-ice-200 text-sm mt-1">{season.keeperLimit} keepers per team</p>
+        </div>
+        <div className="card p-8 text-center">
+          <p className="text-ice-200 text-lg font-medium">Keeper data not yet available for {year}</p>
+          <p className="text-rink-600 text-sm mt-2">This season's keeper selections will be added soon.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Group by franchise
   const byFranchise = keepers.reduce<Record<string, typeof keepers>>((acc, k) => {
     const key = k.franchiseId;
     if (!acc[key]) acc[key] = [];
@@ -36,7 +55,7 @@ export default async function KeepersByYearPage({ params }: { params: Promise<{ 
     return acc;
   }, {});
 
-  const posOrder = { F: 0, D: 1, G: 2 };
+  // Sort each group: F alpha, D alpha, G alpha
   const groups = Object.values(byFranchise).map((group) =>
     [...group].sort((a, b) => {
       const pa = posOrder[a.position as keyof typeof posOrder] ?? 9;
@@ -45,6 +64,9 @@ export default async function KeepersByYearPage({ params }: { params: Promise<{ 
       return a.playerName.localeCompare(b.playerName);
     })
   );
+
+  // Sort groups by GM name
+  groups.sort((a, b) => a[0].franchise.gmName.localeCompare(b[0].franchise.gmName));
 
   return (
     <div className="space-y-6">

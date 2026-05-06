@@ -2,30 +2,48 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { getAllFranchises } from "@/lib/queries/franchises";
 
-// Phase 1: one GM per franchise. Owner page = franchise page with GM framing.
+const INACTIVE_SLUGS = new Set(["senkiw", "longman", "shockey", "fudge"]);
+
 export default async function OwnersPage() {
   const franchises = await getAllFranchises();
 
+  const active   = franchises.filter((f) => !INACTIVE_SLUGS.has(f.slug)).sort((a, b) => a.gmName.localeCompare(b.gmName));
+  const inactive = franchises.filter((f) =>  INACTIVE_SLUGS.has(f.slug)).sort((a, b) => a.gmName.localeCompare(b.gmName));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <h1 className="text-2xl font-bold text-ice-50">Managers</h1>
-      {franchises.length === 0 && (
-        <p className="text-ice-200">No managers yet. Run the seed script.</p>
-      )}
+
       <div className="divide-y divide-rink-700 card overflow-hidden">
-        {franchises.map((f) => (
+        {active.map((f) => (
           <Link
             key={f.id}
-            href={`/owners/${f.slug}`}
+            href={`/franchises/${f.slug}`}
             className="flex items-center justify-between px-5 py-4 hover:bg-rink-700 transition-colors"
           >
-            <div>
-              <div className="font-semibold text-ice-50">{f.gmName}</div>
-            </div>
+            <span className="font-semibold text-ice-50">{f.gmName}</span>
             <span className="text-ice-200 text-sm">→</span>
           </Link>
         ))}
       </div>
+
+      {inactive.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wider">Former GMs</h2>
+          <div className="divide-y divide-red-950 card border-red-900 overflow-hidden">
+            {inactive.map((f) => (
+              <Link
+                key={f.id}
+                href={`/franchises/${f.slug}`}
+                className="flex items-center justify-between px-5 py-4 bg-red-950 hover:bg-red-900 transition-colors"
+              >
+                <span className="font-semibold text-red-400">{f.gmName}</span>
+                <span className="text-red-700 text-sm">→</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

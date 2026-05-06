@@ -13,7 +13,6 @@ export default function Home() {
           { href: "/seasons",    label: "Seasons",    desc: "Year-by-year standings" },
           { href: "/champions",  label: "Champions",  desc: "League winners" },
           { href: "/keepers",    label: "Keepers",    desc: "Who kept who" },
-          { href: "/franchises", label: "Franchises", desc: "Team histories" },
           { href: "/owners",     label: "Managers",   desc: "GM pages" },
         ].map(({ href, label, desc }) => (
           <Link

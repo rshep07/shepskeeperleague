@@ -9,10 +9,13 @@ export async function getKeepersBySeason(yearLabel: string) {
 }
 
 export async function getAllKeeperSeasons() {
-  // Returns distinct seasons that have at least one keeper row
+  // Returns ALL seasons so we can show placeholder for ones without keepers
   return db.season.findMany({
-    where: { keepers: { some: {} } },
     orderBy: { yearLabel: "desc" },
-    select: { yearLabel: true, id: true },
+    select: {
+      yearLabel: true,
+      id: true,
+      keepers: { select: { id: true }, take: 1 },
+    },
   });
 }

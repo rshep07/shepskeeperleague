@@ -6,7 +6,6 @@ const links = [
   { href: "/seasons",    label: "Seasons"    },
   { href: "/champions",  label: "Champions"  },
   { href: "/keepers",    label: "Keepers"    },
-  { href: "/franchises", label: "Franchises" },
   { href: "/owners",     label: "Managers"   },
 ];
 
