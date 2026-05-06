@@ -36,13 +36,12 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                 href={`/seasons/${ts.season.yearLabel}`}
                 className="flex items-center justify-between px-5 py-3 hover:bg-rink-700 transition-colors text-sm"
               >
-                <span className="text-gold-400 font-medium">{ts.season.yearLabel}</span>
-                <span className="text-ice-50">{ts.teamName}</span>
-                <span className="text-ice-200 font-mono">
+                <span className="text-gold-400 font-medium w-20">{ts.season.yearLabel}</span>
+                <span className="text-ice-200 font-mono flex-1">
                   {ts.rank ? `#${ts.rank}` : "—"}
                   {ts.points ? ` · ${ts.points} pts` : ""}
                 </span>
-                <div>
+                <div className="text-right">
                   {ts.isChampion && <span className="text-gold-400 text-xs font-bold">CHAMPION</span>}
                   {ts.isInTheMoney && !ts.isChampion && <span className="text-green-400 text-xs">ITM</span>}
                 </div>
