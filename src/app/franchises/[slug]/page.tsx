@@ -24,8 +24,8 @@ function sortKeepers<T extends { position: string | null; playerName: string }>(
 function positionStyle(position: string | null) {
   switch (position) {
     case "F": return "bg-rink-700 text-ice-100";
-    case "D": return "bg-blue-900 text-blue-300";
-    case "G": return "bg-yellow-900 text-gold-400";
+    case "D": return "bg-rink-700 text-ice-200 ring-1 ring-rink-600";
+    case "G": return "bg-rink-700 text-gold-400";
     default:  return "bg-rink-700 text-ice-200";
   }
 }

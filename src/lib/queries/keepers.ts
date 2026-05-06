@@ -9,13 +9,24 @@ export async function getKeepersBySeason(yearLabel: string) {
 }
 
 export async function getAllKeeperSeasons() {
-  // Returns ALL seasons so we can show placeholder for ones without keepers
   return db.season.findMany({
     orderBy: { yearLabel: "desc" },
     select: {
       yearLabel: true,
       id: true,
       keepers: { select: { id: true }, take: 1 },
+    },
+  });
+}
+
+export async function getAllSeasonsWithKeepersGrouped() {
+  return db.season.findMany({
+    orderBy: { yearLabel: "desc" },
+    include: {
+      keepers: {
+        include: { franchise: true },
+        orderBy: [{ franchise: { gmName: "asc" } }, { playerName: "asc" }],
+      },
     },
   });
 }

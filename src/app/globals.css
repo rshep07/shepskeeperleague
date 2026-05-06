@@ -2,14 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-rink-900 text-ice-100;
+@layer base {
+  body {
+    @apply bg-rink-900 text-ice-100 antialiased;
+    font-family: system-ui, sans-serif;
+  }
+
+  h1, h2, h3 {
+    @apply text-ice-50 tracking-tight;
+  }
 }
 
-.card {
-  @apply bg-rink-800 border border-rink-700 rounded-lg;
-}
+@layer components {
+  .card {
+    @apply bg-rink-800 border border-rink-700 rounded-xl;
+  }
 
-.card-accent {
-  @apply card border-t-2 border-t-gold-500;
+  .card-hover {
+    @apply card hover:border-rink-600 transition-colors;
+  }
+
+  .badge-gold {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gold-400/10 text-gold-400 border border-gold-400/20;
+  }
+
+  .badge-gray {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs bg-rink-700 text-ice-200;
+  }
 }

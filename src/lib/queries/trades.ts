@@ -33,7 +33,21 @@ export async function getTradesBySeason(yearLabel: string) {
   return { season, trades, teamNames };
 }
 
-export async function getTradesForFranchise(franchiseId: string) {
+export async function getAllSeasonsWithTradeDetails() {
+  return db.season.findMany({
+    where: { trades: { some: {} } },
+    orderBy: { yearLabel: "desc" },
+    include: {
+      trades: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          sides: { include: { franchise: true } },
+        },
+      },
+      teamSeasons: { select: { franchiseId: true, teamName: true } },
+    },
+  });
+}
   // Get all trades this franchise was involved in, deduplicated
   const sides = await db.tradeSide.findMany({
     where: { franchiseId },

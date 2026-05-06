@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 
 function positionStyle(position: string | null) {
   switch (position) {
-    case "F": return "text-ice-100";
+    case "F": return "text-ice-50";
     case "D": return "text-blue-400";
     case "G": return "text-gold-400";
     default:  return "text-ice-200";
@@ -14,9 +14,9 @@ function positionStyle(position: string | null) {
 
 function positionBadge(position: string | null) {
   switch (position) {
-    case "F": return "bg-rink-700 text-ice-200";
-    case "D": return "bg-blue-900 text-blue-300";
-    case "G": return "bg-yellow-900 text-gold-400";
+    case "F": return "bg-rink-700 text-ice-50";
+    case "D": return "bg-rink-700 text-ice-200 ring-1 ring-rink-600";
+    case "G": return "bg-rink-700 text-gold-400";
     default:  return "bg-rink-700 text-ice-200";
   }
 }

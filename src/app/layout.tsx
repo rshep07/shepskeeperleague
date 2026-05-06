@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
           {children}
         </main>
-        <footer className="text-center text-rink-600 text-sm py-6 border-t border-rink-700">
+        <footer className="text-center text-ice-300 text-xs tracking-widest uppercase py-8 border-t border-rink-700">
           Shep's Keeper League · Est. 2008
         </footer>
       </body>

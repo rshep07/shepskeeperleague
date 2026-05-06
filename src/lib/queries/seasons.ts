@@ -6,6 +6,18 @@ export async function getAllSeasons() {
   });
 }
 
+export async function getAllSeasonsWithStandings() {
+  return db.season.findMany({
+    orderBy: { yearLabel: "desc" },
+    include: {
+      teamSeasons: {
+        orderBy: { rank: "asc" },
+        include: { franchise: true },
+      },
+    },
+  });
+}
+
 export async function getSeasonByYear(yearLabel: string) {
   return db.season.findUnique({
     where: { yearLabel },
