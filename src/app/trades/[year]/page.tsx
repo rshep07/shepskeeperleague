@@ -29,33 +29,36 @@ function TradeCard({
         </div>
       )}
       <div className="divide-y divide-rink-700">
-        {trade.sides.map((side, i) => (
-          <div key={side.id} className="py-3 first:pt-0 last:pb-0">
-            <div className="flex items-start gap-3">
-              <div className="text-xs text-ice-300 w-12 shrink-0 pt-0.5 font-medium">
-                {i === 0 ? "gave" : "gave"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/owners/${side.franchise.slug}`}
-                  className="text-gold-400 text-sm font-semibold hover:underline"
-                >
-                  {side.franchise.gmName}
-                </Link>
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {side.players.map((p) => (
-                    <span
-                      key={p}
-                      className="px-2 py-0.5 bg-rink-700 text-ice-100 text-sm rounded"
-                    >
-                      {p}
-                    </span>
-                  ))}
+        {trade.sides.map((side, i) => {
+          const otherSide = trade.sides[i === 0 ? 1 : 0];
+          return (
+            <div key={side.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start gap-3">
+                <div className="text-xs text-ice-300 w-16 shrink-0 pt-0.5 font-medium">
+                  received
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/owners/${side.franchise.slug}`}
+                    className="text-gold-400 text-sm font-semibold hover:underline"
+                  >
+                    {side.franchise.gmName}
+                  </Link>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {otherSide?.players.map((p) => (
+                      <span
+                        key={p}
+                        className="px-2 py-0.5 bg-rink-700 text-ice-100 text-sm rounded"
+                      >
+                        {p}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -160,15 +160,9 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                             {otherSide.franchise.gmName}
                           </Link>
                         </div>
-                        <div className="text-sm space-y-0.5">
-                          <div>
-                            <span className="text-ice-300 text-xs">gave: </span>
-                            <span className="text-ice-100">{mySide.players.join(", ")}</span>
-                          </div>
-                          <div>
-                            <span className="text-ice-300 text-xs">received: </span>
-                            <span className="text-ice-100">{otherSide.players.join(", ")}</span>
-                          </div>
+                        <div className="text-sm">
+                          <span className="text-ice-300 text-xs">received: </span>
+                          <span className="text-ice-100">{otherSide.players.join(", ")}</span>
                         </div>
                       </div>
                     );
