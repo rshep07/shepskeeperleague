@@ -38,10 +38,12 @@ export default async function KeepersByYearPage({ params }: { params: Promise<{ 
 
   const posOrder = { F: 0, D: 1, G: 2 };
   const groups = Object.values(byFranchise).map((group) =>
-    [...group].sort((a, b) =>
-      (posOrder[a.position as keyof typeof posOrder] ?? 9) -
-      (posOrder[b.position as keyof typeof posOrder] ?? 9)
-    )
+    [...group].sort((a, b) => {
+      const pa = posOrder[a.position as keyof typeof posOrder] ?? 9;
+      const pb = posOrder[b.position as keyof typeof posOrder] ?? 9;
+      if (pa !== pb) return pa - pb;
+      return a.playerName.localeCompare(b.playerName);
+    })
   );
 
   return (

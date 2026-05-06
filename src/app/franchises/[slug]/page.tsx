@@ -9,18 +9,40 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+const posOrder = { F: 0, D: 1, G: 2 } as const;
+
+function sortKeepers<T extends { position: string | null; playerName: string }>(keepers: T[]): T[] {
+  return [...keepers].sort((a, b) => {
+    const pa = posOrder[a.position as keyof typeof posOrder] ?? 9;
+    const pb = posOrder[b.position as keyof typeof posOrder] ?? 9;
+    if (pa !== pb) return pa - pb;
+    return a.playerName.localeCompare(b.playerName);
+  });
+}
+
+function positionStyle(position: string | null) {
+  switch (position) {
+    case "F": return "bg-rink-700 text-ice-100";
+    case "D": return "bg-blue-900 text-blue-300";
+    case "G": return "bg-yellow-900 text-gold-400";
+    default:  return "bg-rink-700 text-ice-200";
+  }
+}
+
 export default async function FranchisePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const franchise = await getFranchiseBySlug(slug);
   if (!franchise) notFound();
 
-  // Group keepers by season
   const keepersBySeason = franchise.keepers.reduce<Record<string, typeof franchise.keepers>>((acc, k) => {
     const label = k.season.yearLabel;
     if (!acc[label]) acc[label] = [];
     acc[label].push(k);
     return acc;
   }, {});
+
+  // Sort seasons descending
+  const keeperSeasons = Object.entries(keepersBySeason).sort(([a], [b]) => b.localeCompare(a));
 
   return (
     <div className="space-y-8">
@@ -59,11 +81,11 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
       {/* Keeper history */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-ice-100">Keeper History</h2>
-        {Object.keys(keepersBySeason).length === 0 ? (
+        {keeperSeasons.length === 0 ? (
           <p className="text-ice-200 text-sm">No keeper data yet.</p>
         ) : (
           <div className="space-y-4">
-            {Object.entries(keepersBySeason).map(([year, keepers]) => (
+            {keeperSeasons.map(([year, keepers]) => (
               <div key={year} className="card p-5">
                 <div className="flex items-center justify-between mb-3">
                   <Link href={`/keepers/${year}`} className="text-gold-400 font-semibold hover:underline">
@@ -72,8 +94,8 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
                   <span className="text-ice-200 text-xs">{keepers.length} keepers</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {keepers.map((k) => (
-                    <span key={k.id} className="bg-rink-700 px-2 py-1 rounded text-sm text-ice-100">
+                  {sortKeepers(keepers).map((k) => (
+                    <span key={k.id} className={`px-2 py-1 rounded text-sm ${positionStyle(k.position)}`}>
                       {k.playerName}
                     </span>
                   ))}
