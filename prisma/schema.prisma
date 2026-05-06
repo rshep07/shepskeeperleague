@@ -23,6 +23,7 @@ model Franchise {
 
   teamSeasons TeamSeason[]
   keepers     Keeper[]
+  tradeSides  TradeSide[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,6 +41,7 @@ model Season {
 
   teamSeasons TeamSeason[]
   keepers     Keeper[]
+  trades      Trade[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -77,4 +79,22 @@ model Keeper {
   keeperRound Int?    // draft round they were kept in
 
   @@unique([franchiseId, seasonId, playerName])
+}
+
+model Trade {
+  id        String      @id @default(cuid())
+  seasonId  String
+  season    Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  isVetoed  Boolean     @default(false)
+  sides     TradeSide[]
+  createdAt DateTime    @default(now())
+}
+
+model TradeSide {
+  id          String    @id @default(cuid())
+  tradeId     String
+  trade       Trade     @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  franchiseId String
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+  players     String[]
 }
