@@ -21,7 +21,6 @@ export default async function OwnersPage() {
           >
             <div>
               <div className="font-semibold text-ice-50">{f.gmName}</div>
-              <div className="text-xs text-ice-200">{f.currentName}</div>
             </div>
             <span className="text-ice-200 text-sm">→</span>
           </Link>

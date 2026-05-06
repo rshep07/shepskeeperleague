@@ -19,8 +19,8 @@ export default async function FranchisesPage() {
             className="flex items-center justify-between px-5 py-4 hover:bg-rink-700 transition-colors"
           >
             <div>
-              <div className="font-semibold text-ice-50">{f.currentName}</div>
-              <div className="text-xs text-ice-200">{f.gmName}</div>
+              <div className="font-semibold text-ice-50">{f.gmName}</div>
+
             </div>
             <span className="text-ice-200 text-sm">→</span>
           </Link>

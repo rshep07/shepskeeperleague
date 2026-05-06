@@ -3,6 +3,12 @@ import { notFound } from "next/navigation";
 import { getFranchiseBySlug } from "@/lib/queries/franchises";
 import Link from "next/link";
 
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 export default async function FranchisePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const franchise = await getFranchiseBySlug(slug);
@@ -19,8 +25,7 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-ice-50">{franchise.currentName}</h1>
-        <p className="text-ice-200 text-sm">{franchise.gmName}</p>
+        <h1 className="text-2xl font-bold text-ice-50">{franchise.gmName}</h1>
       </div>
 
       {/* Season history */}
@@ -38,7 +43,7 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
               >
                 <span className="text-gold-400 font-medium w-20">{ts.season.yearLabel}</span>
                 <span className="text-ice-200 font-mono flex-1">
-                  {ts.rank ? `#${ts.rank}` : "—"}
+                  {ts.rank ? ordinal(ts.rank) : "—"}
                   {ts.points ? ` · ${ts.points} pts` : ""}
                 </span>
                 <div className="text-right">
