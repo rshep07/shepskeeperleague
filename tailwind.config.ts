@@ -20,10 +20,10 @@ const config: Config = {
           600: "#2C2C2C",   // hover states / dividers
         },
         gold: {
-          300: "#E8CE84",   // light gold — highlights
-          400: "#C9A84C",   // primary gold — links, accents
-          500: "#A07830",   // deep gold
-          600: "#7A5A1C",   // darkest gold
+          300: "#99F6E4",   // light teal — highlights, hover
+          400: "#2DD4BF",   // primary teal — links, accents
+          500: "#14B8A6",   // deep teal
+          600: "#0D9488",   // darkest teal
         },
       },
       fontFamily: {
