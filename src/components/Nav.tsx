@@ -7,6 +7,7 @@ const links = [
   { href: "/champions",  label: "Champions"  },
   { href: "/keepers",    label: "Keepers"    },
   { href: "/owners",     label: "Managers"   },
+  { href: "/trades",     label: "Trades"     },
 ];
 
 export function Nav() {

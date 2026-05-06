@@ -14,6 +14,7 @@ export default function Home() {
           { href: "/champions",  label: "Champions",  desc: "League winners" },
           { href: "/keepers",    label: "Keepers",    desc: "Who kept who" },
           { href: "/owners",     label: "Managers",   desc: "GM pages" },
+          { href: "/trades",     label: "Trades",     desc: "Yahoo era deal history" },
         ].map(({ href, label, desc }) => (
           <Link
             key={href}

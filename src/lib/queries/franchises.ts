@@ -18,6 +18,18 @@ export async function getFranchiseBySlug(slug: string) {
         orderBy: [{ season: { yearLabel: "desc" } }, { playerName: "asc" }],
         include: { season: true },
       },
+      tradeSides: {
+        include: {
+          trade: {
+            include: {
+              season: true,
+              sides: {
+                include: { franchise: true },
+              },
+            },
+          },
+        },
+      },
     },
   });
 }
