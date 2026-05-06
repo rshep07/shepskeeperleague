@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-rink-900 text-ice-100;
+}
+
+.card {
+  @apply bg-rink-800 border border-rink-700 rounded-lg;
+}
+
+.card-accent {
+  @apply card border-t-2 border-t-gold-500;
+}
