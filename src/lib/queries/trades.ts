@@ -48,34 +48,3 @@ export async function getAllSeasonsWithTradeDetails() {
     },
   });
 }
-  // Get all trades this franchise was involved in, deduplicated
-  const sides = await db.tradeSide.findMany({
-    where: { franchiseId },
-    include: {
-      trade: {
-        include: {
-          season: true,
-          sides: {
-            include: { franchise: true },
-          },
-        },
-      },
-    },
-  });
-
-  // Deduplicate by trade ID, sort by season then createdAt
-  const seen = new Set<string>();
-  const trades = [];
-  for (const side of sides) {
-    if (!seen.has(side.trade.id)) {
-      seen.add(side.trade.id);
-      trades.push(side.trade);
-    }
-  }
-
-  return trades.sort((a, b) => {
-    const yearDiff = a.season.yearLabel.localeCompare(b.season.yearLabel);
-    if (yearDiff !== 0) return yearDiff;
-    return a.createdAt.getTime() - b.createdAt.getTime();
-  });
-}
