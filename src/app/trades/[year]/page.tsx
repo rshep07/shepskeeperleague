@@ -3,62 +3,60 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTradesBySeason } from "@/lib/queries/trades";
 
+type TradeSide = {
+  id: string;
+  players: string[];
+  franchiseId: string;
+  franchise: { id: string; slug: string; gmName: string };
+};
+
 function TradeCard({
-  trade,
+  leftSide,
+  rightSide,
+  isVetoed,
+  teamNames,
 }: {
-  trade: {
-    id: string;
-    isVetoed: boolean;
-    sides: {
-      id: string;
-      players: string[];
-      franchise: { id: string; slug: string; gmName: string };
-    }[];
-  };
-  seasonTeamNames: Record<string, string>;
+  leftSide: TradeSide;
+  rightSide: TradeSide;
+  isVetoed: boolean;
+  teamNames: Record<string, string>;
 }) {
   return (
-    <div
-      className={`card p-5 space-y-4 ${
-        trade.isVetoed ? "opacity-60 border-red-900" : ""
-      }`}
-    >
-      {trade.isVetoed && (
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-900/50 text-red-400 text-xs font-bold rounded uppercase tracking-wider">
-          Vetoed
+    <div className={`card overflow-hidden ${isVetoed ? "opacity-60 border-red-900/50" : ""}`}>
+      {isVetoed && (
+        <div className="px-4 pt-3 pb-0">
+          <span className="text-xs text-red-400 font-bold uppercase tracking-wider">Vetoed</span>
         </div>
       )}
-      <div className="divide-y divide-rink-700">
-        {trade.sides.map((side, i) => {
-          const otherSide = trade.sides[i === 0 ? 1 : 0];
-          return (
-            <div key={side.id} className="py-3 first:pt-0 last:pb-0">
-              <div className="flex items-start gap-3">
-                <div className="text-xs text-ice-300 w-16 shrink-0 pt-0.5 font-medium">
-                  received
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/owners/${side.franchise.slug}`}
-                    className="text-gold-400 text-sm font-semibold hover:underline"
-                  >
-                    {side.franchise.gmName}
-                  </Link>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {otherSide?.players.map((p) => (
-                      <span
-                        key={p}
-                        className="px-2 py-0.5 bg-rink-700 text-ice-100 text-sm rounded"
-                      >
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-2 divide-x divide-rink-700">
+        <div className="p-4">
+          <Link href={`/owners/${leftSide.franchise.slug}`} className="text-sm font-bold text-ice-50 uppercase tracking-wide hover:text-gold-400 transition-colors">
+            {leftSide.franchise.gmName}
+          </Link>
+          {teamNames[leftSide.franchiseId] && (
+            <div className="text-xs text-ice-300 mt-0.5">{teamNames[leftSide.franchiseId]}</div>
+          )}
+          <div className="text-xs text-ice-400 uppercase tracking-wider mb-2 mt-3">received</div>
+          <div className="space-y-1">
+            {rightSide.players.map((p) => (
+              <div key={p} className="text-sm text-ice-100">{p}</div>
+            ))}
+          </div>
+        </div>
+        <div className="p-4">
+          <Link href={`/owners/${rightSide.franchise.slug}`} className="text-sm font-bold text-ice-50 uppercase tracking-wide hover:text-gold-400 transition-colors">
+            {rightSide.franchise.gmName}
+          </Link>
+          {teamNames[rightSide.franchiseId] && (
+            <div className="text-xs text-ice-300 mt-0.5">{teamNames[rightSide.franchiseId]}</div>
+          )}
+          <div className="text-xs text-ice-400 uppercase tracking-wider mb-2 mt-3">received</div>
+          <div className="space-y-1">
+            {leftSide.players.map((p) => (
+              <div key={p} className="text-sm text-ice-100">{p}</div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -73,27 +71,18 @@ export default async function TradesSeasonPage({
   const result = await getTradesBySeason(year);
   if (!result) notFound();
 
-  const { season, trades } = result;
+  const { season, trades, teamNames } = result;
   const isYahoo = season.platform === "YAHOO";
-
   const completedTrades = trades.filter((t) => !t.isVetoed);
   const vetoedTrades = trades.filter((t) => t.isVetoed);
-
-  // Build team name lookup from teamSeasons if needed — we use gmName directly
-  const seasonTeamNames: Record<string, string> = {};
 
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/trades"
-          className="text-ice-200 text-sm hover:text-ice-50 transition-colors"
-        >
+        <Link href="/trades" className="text-ice-200 text-sm hover:text-ice-50 transition-colors">
           ← Trade History
         </Link>
-        <h1 className="text-2xl font-bold text-ice-50 mt-2">
-          {season.yearLabel} Trades
-        </h1>
+        <h1 className="text-2xl font-bold text-ice-50 mt-2">{season.yearLabel} Trades</h1>
         <p className="text-ice-200 text-sm mt-1">
           {completedTrades.length} trades
           {vetoedTrades.length > 0 && ` · ${vetoedTrades.length} vetoed`}
@@ -102,9 +91,8 @@ export default async function TradesSeasonPage({
 
       {isYahoo && (
         <div className="rounded-lg border border-gold-400/30 bg-gold-400/5 px-4 py-3 text-sm text-gold-300">
-          <span className="font-semibold">Note:</span> Draft picks were
-          tradeable on Yahoo and are not reflected in these records. Some trades
-          may appear more one-sided than they actually were.
+          <span className="font-semibold">Note:</span> Draft picks were tradeable on Yahoo and are
+          not reflected in these records. Some trades may appear more one-sided than they actually were.
         </div>
       )}
 
@@ -112,26 +100,19 @@ export default async function TradesSeasonPage({
         <p className="text-ice-200">No trades recorded for this season.</p>
       ) : (
         <div className="space-y-3">
-          {completedTrades.map((trade) => (
-            <TradeCard
-              key={trade.id}
-              trade={trade}
-              seasonTeamNames={seasonTeamNames}
-            />
-          ))}
-
+          {completedTrades.map((trade) => {
+            const [a, b] = trade.sides;
+            if (!a || !b) return null;
+            return <TradeCard key={trade.id} leftSide={a} rightSide={b} isVetoed={false} teamNames={teamNames} />;
+          })}
           {vetoedTrades.length > 0 && (
             <>
-              <h2 className="text-lg font-semibold text-ice-100 pt-4">
-                Vetoed Trades
-              </h2>
-              {vetoedTrades.map((trade) => (
-                <TradeCard
-                  key={trade.id}
-                  trade={trade}
-                  seasonTeamNames={seasonTeamNames}
-                />
-              ))}
+              <h2 className="text-lg font-semibold text-ice-100 pt-4">Vetoed Trades</h2>
+              {vetoedTrades.map((trade) => {
+                const [a, b] = trade.sides;
+                if (!a || !b) return null;
+                return <TradeCard key={trade.id} leftSide={a} rightSide={b} isVetoed={true} teamNames={teamNames} />;
+              })}
             </>
           )}
         </div>

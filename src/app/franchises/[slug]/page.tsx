@@ -34,145 +34,176 @@ export default async function FranchisePage({ params }: { params: Promise<{ slug
   const franchise = await getFranchiseBySlug(slug);
   if (!franchise) notFound();
 
-  const keepersBySeason = franchise.keepers.reduce<Record<string, typeof franchise.keepers>>((acc, k) => {
-    const label = k.season.yearLabel;
-    if (!acc[label]) acc[label] = [];
-    acc[label].push(k);
-    return acc;
-  }, {});
+  // Group keepers by season
+  const keepersBySeason: Record<string, typeof franchise.keepers> = {};
+  for (const k of franchise.keepers) {
+    const y = k.season.yearLabel;
+    if (!keepersBySeason[y]) keepersBySeason[y] = [];
+    keepersBySeason[y].push(k);
+  }
 
-  const keeperSeasons = Object.entries(keepersBySeason).sort(([a], [b]) => b.localeCompare(a));
+  // Group teamSeasons by year
+  const teamSeasonByYear: Record<string, typeof franchise.teamSeasons[0]> = {};
+  for (const ts of franchise.teamSeasons) {
+    teamSeasonByYear[ts.season.yearLabel] = ts;
+  }
 
-  // Deduplicate trades and group by season
+  // Deduplicate trades, group by season
   const tradeMap = new Map<string, (typeof franchise.tradeSides)[0]["trade"]>();
   for (const side of franchise.tradeSides) {
-    if (!tradeMap.has(side.trade.id)) {
-      tradeMap.set(side.trade.id, side.trade);
+    if (!tradeMap.has(side.trade.id)) tradeMap.set(side.trade.id, side.trade);
+  }
+  const tradesBySeason: Record<string, Array<(typeof franchise.tradeSides)[0]["trade"]>> = {};
+  for (const trade of tradeMap.values()) {
+    const y = trade.season.yearLabel;
+    if (!tradesBySeason[y]) tradesBySeason[y] = [];
+    tradesBySeason[y].push(trade);
+  }
+
+  // Build team name lookup per season for trade cards
+  const teamNamesBySeasonAndFranchise: Record<string, Record<string, string>> = {};
+  for (const trade of tradeMap.values()) {
+    const y = trade.season.yearLabel;
+    if (!teamNamesBySeasonAndFranchise[y]) teamNamesBySeasonAndFranchise[y] = {};
+    for (const side of trade.sides) {
+      // We don't have season teamNames here, use empty for now
+      teamNamesBySeasonAndFranchise[y][side.franchiseId] = "";
     }
   }
-  const allTrades = Array.from(tradeMap.values()).sort((a, b) =>
-    b.season.yearLabel.localeCompare(a.season.yearLabel)
-  );
+  // Fill in this franchise's own team names
+  for (const ts of franchise.teamSeasons) {
+    const y = ts.season.yearLabel;
+    if (!teamNamesBySeasonAndFranchise[y]) teamNamesBySeasonAndFranchise[y] = {};
+    teamNamesBySeasonAndFranchise[y][franchise.id] = ts.teamName;
+  }
 
-  const tradesBySeason = allTrades.reduce<Record<string, typeof allTrades>>((acc, t) => {
-    const label = t.season.yearLabel;
-    if (!acc[label]) acc[label] = [];
-    acc[label].push(t);
-    return acc;
-  }, {});
-
-  const tradeSeasons = Object.entries(tradesBySeason).sort(([a], [b]) => b.localeCompare(a));
+  // All unique season years, descending
+  const allYears = [...new Set([
+    ...franchise.teamSeasons.map(ts => ts.season.yearLabel),
+    ...Object.keys(keepersBySeason),
+    ...Object.keys(tradesBySeason),
+  ])].sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-ice-50">{franchise.gmName}</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-ice-50">{franchise.gmName}</h1>
 
-      {/* Season history */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-ice-100">Season History</h2>
-        {franchise.teamSeasons.length === 0 ? (
-          <p className="text-ice-200 text-sm">No season data yet.</p>
-        ) : (
-          <div className="card overflow-hidden divide-y divide-rink-700">
-            {franchise.teamSeasons.map((ts) => (
-              <Link
-                key={ts.id}
-                href={`/seasons/${ts.season.yearLabel}`}
-                className="flex items-center justify-between px-5 py-3 hover:bg-rink-700 transition-colors text-sm"
-              >
-                <span className="text-gold-400 font-medium w-20">{ts.season.yearLabel}</span>
-                <span className="text-ice-200 font-mono flex-1">
-                  {ts.rank ? ordinal(ts.rank) : "—"}
-                  {ts.points ? ` · ${ts.points} pts` : ""}
-                </span>
-                <div className="text-right">
-                  {ts.isChampion && <span className="text-gold-400 text-xs font-bold">CHAMPION</span>}
-                  {ts.isInTheMoney && !ts.isChampion && <span className="text-green-400 text-xs">ITM</span>}
-                </div>
+      {allYears.map((year) => {
+        const ts = teamSeasonByYear[year];
+        const keepers = keepersBySeason[year] ?? [];
+        const trades = (tradesBySeason[year] ?? []).sort((a, b) =>
+          a.createdAt.getTime() - b.createdAt.getTime()
+        );
+        const teamNames = teamNamesBySeasonAndFranchise[year] ?? {};
+
+        return (
+          <div key={year} className="space-y-0">
+            {/* Season label */}
+            <div className="flex items-center gap-3 mb-2">
+              <Link href={`/seasons/${year}`} className="text-gold-400 font-bold text-lg hover:underline">
+                {year}
               </Link>
-            ))}
-          </div>
-        )}
-      </section>
+              {ts?.isChampion && (
+                <span className="text-gold-400 text-xs font-bold uppercase tracking-wide">Champion</span>
+              )}
+              {ts?.isInTheMoney && !ts?.isChampion && (
+                <span className="text-green-400 text-xs font-medium uppercase tracking-wide">ITM</span>
+              )}
+            </div>
 
-      {/* Keeper history */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-ice-100">Keeper History</h2>
-        {keeperSeasons.length === 0 ? (
-          <p className="text-ice-200 text-sm">No keeper data yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {keeperSeasons.map(([year, keepers]) => (
-              <div key={year} className="card p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <Link href={`/keepers/${year}`} className="text-gold-400 font-semibold hover:underline">
-                    {year}
-                  </Link>
-                  <span className="text-ice-200 text-xs">{keepers.length} keepers</span>
+            <div className="card divide-y divide-rink-700">
+              {/* Season result */}
+              {ts && (
+                <div className="px-5 py-3 flex items-center gap-6 text-sm">
+                  <span className="text-ice-100 font-medium">{ts.rank ? ordinal(ts.rank) : "—"}</span>
+                  {ts.points && <span className="text-ice-200">{ts.points} pts</span>}
+                  <span className="text-ice-300 text-xs">{ts.teamName}</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {sortKeepers(keepers).map((k) => (
-                    <span key={k.id} className={`px-2 py-1 rounded text-sm ${positionStyle(k.position)}`}>
-                      {k.playerName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+              )}
 
-      {/* Trade history */}
-      {tradeSeasons.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-ice-100">Trade History</h2>
-          <div className="space-y-4">
-            {tradeSeasons.map(([year, trades]) => (
-              <div key={year} className="card p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Link href={`/trades/${year}`} className="text-gold-400 font-semibold hover:underline">
-                    {year}
-                  </Link>
-                  <span className="text-ice-200 text-xs">{trades.filter(t => !t.isVetoed).length} trades</span>
+              {/* Keepers */}
+              {keepers.length > 0 && (
+                <div className="px-5 py-4">
+                  <div className="text-xs uppercase tracking-wider text-ice-400 mb-3">
+                    <Link href={`/keepers/${year}`} className="hover:text-ice-200 transition-colors">
+                      Keepers
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {sortKeepers(keepers).map((k) => (
+                      <span key={k.id} className={`px-2 py-1 rounded text-sm ${positionStyle(k.position)}`}>
+                        {k.playerName}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {trades.map((trade) => {
-                    const mySide = trade.sides.find(s => s.franchiseId === franchise.id);
-                    const otherSide = trade.sides.find(s => s.franchiseId !== franchise.id);
-                    if (!mySide || !otherSide) return null;
-                    return (
-                      <div
-                        key={trade.id}
-                        className={`border-l-2 pl-3 ${trade.isVetoed ? "border-red-600 opacity-60" : "border-rink-600"}`}
-                      >
-                        {trade.isVetoed && (
-                          <span className="text-xs text-red-400 font-bold uppercase">Vetoed · </span>
-                        )}
-                        <div className="text-xs text-ice-300 mb-1">
-                          with{" "}
-                          <Link
-                            href={`/owners/${otherSide.franchise.slug}`}
-                            className="text-ice-100 hover:text-gold-400"
-                          >
-                            {otherSide.franchise.gmName}
-                          </Link>
+              )}
+
+              {/* Trades */}
+              {trades.length > 0 && (
+                <div className="px-5 py-4">
+                  <div className="text-xs uppercase tracking-wider text-ice-400 mb-3">
+                    <Link href={`/trades/${year}`} className="hover:text-ice-200 transition-colors">
+                      Trades
+                    </Link>
+                  </div>
+                  <div className="space-y-3">
+                    {trades.map((trade) => {
+                      // Always put this franchise on the left
+                      const mySide = trade.sides.find((s) => s.franchiseId === franchise.id);
+                      const otherSide = trade.sides.find((s) => s.franchiseId !== franchise.id);
+                      if (!mySide || !otherSide) return null;
+
+                      return (
+                        <div
+                          key={trade.id}
+                          className={`rounded-lg overflow-hidden border border-rink-700 ${trade.isVetoed ? "opacity-60" : ""}`}
+                        >
+                          {trade.isVetoed && (
+                            <div className="px-3 pt-2 pb-0">
+                              <span className="text-xs text-red-400 font-bold uppercase tracking-wider">Vetoed</span>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-2 divide-x divide-rink-700">
+                            <div className="p-3">
+                              <div className="text-xs font-bold text-ice-50 uppercase tracking-wide">
+                                {franchise.gmName}
+                              </div>
+                              {teamNames[franchise.id] && (
+                                <div className="text-xs text-ice-300 mt-0.5">{teamNames[franchise.id]}</div>
+                              )}
+                              <div className="text-xs text-ice-400 uppercase tracking-wider mt-2 mb-1">received</div>
+                              <div className="space-y-0.5">
+                                {otherSide.players.map((p) => (
+                                  <div key={p} className="text-sm text-ice-100">{p}</div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <Link
+                                href={`/owners/${otherSide.franchise.slug}`}
+                                className="text-xs font-bold text-ice-50 uppercase tracking-wide hover:text-gold-400 transition-colors"
+                              >
+                                {otherSide.franchise.gmName}
+                              </Link>
+                              <div className="text-xs text-ice-400 uppercase tracking-wider mt-2 mb-1">received</div>
+                              <div className="space-y-0.5">
+                                {mySide.players.map((p) => (
+                                  <div key={p} className="text-sm text-ice-100">{p}</div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm">
-                          <span className="text-ice-300 text-xs">received: </span>
-                          <span className="text-ice-100">{otherSide.players.join(", ")}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        </section>
-      )}
+        );
+      })}
     </div>
   );
 }

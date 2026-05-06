@@ -11,20 +11,26 @@ export async function getSeasonsWithTrades() {
 export async function getTradesBySeason(yearLabel: string) {
   const season = await db.season.findUnique({
     where: { yearLabel },
+    include: {
+      teamSeasons: { include: { franchise: true } },
+    },
   });
   if (!season) return null;
 
   const trades = await db.trade.findMany({
     where: { seasonId: season.id },
     include: {
-      sides: {
-        include: { franchise: true },
-      },
+      sides: { include: { franchise: true } },
     },
     orderBy: { createdAt: "asc" },
   });
 
-  return { season, trades };
+  const teamNames: Record<string, string> = {};
+  for (const ts of season.teamSeasons) {
+    teamNames[ts.franchiseId] = ts.teamName;
+  }
+
+  return { season, trades, teamNames };
 }
 
 export async function getTradesForFranchise(franchiseId: string) {
