@@ -21,15 +21,6 @@ function positionStyle(position: string | null) {
   }
 }
 
-function positionBadge(position: string | null) {
-  switch (position) {
-    case "F": return "bg-rink-700 text-ice-50";
-    case "D": return "bg-rink-700 text-blue-400 ring-1 ring-rink-600";
-    case "G": return "bg-rink-700 text-gold-400";
-    default:  return "bg-rink-700 text-ice-200";
-  }
-}
-
 export default async function ChampionsPage() {
   const champions = await getAllChampionsWithRosters();
 
@@ -73,21 +64,18 @@ export default async function ChampionsPage() {
                 </div>
 
                 {groups.length > 0 ? (
-                  <div className="inline-block min-w-48">
-                    <div className="text-xs text-ice-400 uppercase tracking-wider mb-2">
+                  <div>
+                    <div className="text-xs text-ice-400 uppercase tracking-wider mb-3">
                       {c.season.platform === "YAHOO" ? "Winning Roster" : "Keepers Declared"}
                     </div>
-                    <div className="space-y-3">
+                    <div className="flex gap-8">
                       {groups.map(({ pos, players }) => (
                         <div key={pos}>
                           <div className="text-xs text-ice-400 mb-1">{positionLabel(pos)}</div>
                           <ul className="space-y-0.5">
                             {players.map((p) => (
-                              <li key={p.id} className="flex items-center gap-3 text-sm">
-                                <span className={`flex-1 ${positionStyle(p.position)}`}>{p.playerName}</span>
-                                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${positionBadge(p.position)}`}>
-                                  {p.position}
-                                </span>
+                              <li key={p.id} className={`text-sm ${positionStyle(p.position)}`}>
+                                {p.playerName}
                               </li>
                             ))}
                           </ul>
