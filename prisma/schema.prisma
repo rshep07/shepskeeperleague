@@ -24,6 +24,7 @@ model Franchise {
   teamSeasons TeamSeason[]
   keepers     Keeper[]
   tradeSides  TradeSide[]
+  rosters     Roster[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -42,6 +43,7 @@ model Season {
   teamSeasons TeamSeason[]
   keepers     Keeper[]
   trades      Trade[]
+  rosters     Roster[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,4 +99,17 @@ model TradeSide {
   franchiseId String
   franchise   Franchise @relation(fields: [franchiseId], references: [id])
   players     String[]
+}
+
+// End-of-season roster snapshots (Yahoo era: pulled from Yahoo API).
+// Used on Champions page and franchise history to show full rosters.
+model Roster {
+  id          String    @id @default(cuid())
+  franchiseId String
+  seasonId    String
+  franchise   Franchise @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  playerName  String
+  position    String? // F, D, G
 }
