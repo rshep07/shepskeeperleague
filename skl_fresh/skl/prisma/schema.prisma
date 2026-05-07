@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Platform {
+  YAHOO
+  FANTRAX
+}
+
+// A franchise is a team slot that persists across seasons.
+// gmName = current GM (Phase 1 simplification: one GM per franchise).
+model Franchise {
+  id          String @id @default(cuid())
+  slug        String @unique
+  currentName String
+  gmName      String
+
+  teamSeasons TeamSeason[]
+  keepers     Keeper[]
+  tradeSides  TradeSide[]
+  rosters     Roster[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One row per season year (e.g. "2024-25").
+model Season {
+  id           String   @id @default(cuid())
+  yearLabel    String   @unique // "2024-25"
+  platform     Platform
+  teamCount    Int
+  keeperLimit  Int      @default(9)
+  payoutCount  Int      @default(4) // top N teams are "in the money"
+  isFinalized  Boolean  @default(false)
+
+  teamSeasons TeamSeason[]
+  keepers     Keeper[]
+  trades      Trade[]
+  rosters     Roster[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// A franchise's results in one specific season.
+model TeamSeason {
+  id          String    @id @default(cuid())
+  franchiseId String
+  seasonId    String
+  franchise   Franchise @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  // Season-specific team name (may differ from franchise.currentName).
+  teamName     String
+  rank         Int?   // final standings rank (1 = first place)
+  points       Float?
+  isChampion   Boolean @default(false)
+  isInTheMoney Boolean @default(false)
+
+  @@unique([franchiseId, seasonId])
+}
+
+// One row per keeper per franchise per season.
+model Keeper {
+  id          String    @id @default(cuid())
+  franchiseId String
+  seasonId    String
+  franchise   Franchise @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  playerName  String
+  position    String? // C, LW, RW, D, G
+  nhlTeam     String?
+  keeperRound Int?    // draft round they were kept in
+
+  @@unique([franchiseId, seasonId, playerName])
+}
+
+model Trade {
+  id        String      @id @default(cuid())
+  seasonId  String
+  season    Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  isVetoed  Boolean     @default(false)
+  sides     TradeSide[]
+  createdAt DateTime    @default(now())
+}
+
+model TradeSide {
+  id          String    @id @default(cuid())
+  tradeId     String
+  trade       Trade     @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  franchiseId String
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+  players     String[]
+}
+
+// End-of-season roster snapshots (Yahoo era: pulled from Yahoo API).
+// Used on Champions page and franchise history to show full rosters.
+model Roster {
+  id          String    @id @default(cuid())
+  franchiseId String
+  seasonId    String
+  franchise   Franchise @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  season      Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  playerName  String
+  position    String? // F, D, G
+}
