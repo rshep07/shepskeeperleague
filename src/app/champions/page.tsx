@@ -38,11 +38,10 @@ export default async function ChampionsPage() {
             header={
               <div className="flex items-center gap-4">
                 <span className="text-ice-50 font-semibold w-20">{c.season.yearLabel}</span>
-                <Link
-                  href={`/owners/${c.franchise.slug}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-gold-400 font-medium hover:text-gold-300 transition-colors"
-                >
+            <Link
+  href={`/owners/${c.franchise.slug}`}
+  className="text-gold-400 font-medium hover:text-gold-300 transition-colors"
+>
                   {c.franchise.gmName}
                 </Link>
                 <span className="text-ice-300 text-sm">{c.teamName}</span>
