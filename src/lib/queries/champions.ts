@@ -11,7 +11,7 @@ export async function getAllChampions() {
   });
 }
 
-export type ChampionWithRoster = Awaited<
+export type ChampionWithRoster = Awaited
   ReturnType<typeof getAllChampionsWithRosters>
 >[number];
 
@@ -24,8 +24,6 @@ export async function getAllChampionsWithRosters() {
 
   const withRosters = await Promise.all(
     champions.map(async (c) => {
-      // Yahoo seasons → end-of-season Roster table (full squad from API)
-      // Fantrax seasons → Keeper table (keepers declared for next season)
       if (c.season.platform === "YAHOO") {
         const roster = await db.roster.findMany({
           where: { franchiseId: c.franchiseId, seasonId: c.seasonId },
