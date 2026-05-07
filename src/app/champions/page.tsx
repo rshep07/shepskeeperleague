@@ -54,7 +54,6 @@ export default async function ChampionsPage() {
                 <span>{c.points} pts</span>
                 <span className="text-ice-300 text-xs uppercase tracking-wider">{c.season.platform}</span>
               </div>
-
               {c.players.length > 0 ? (
                 <div>
                   <div className="text-xs text-ice-400 uppercase tracking-wider mb-2">
