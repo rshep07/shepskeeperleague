@@ -11,10 +11,6 @@ export async function getAllChampions() {
   });
 }
 
-export type ChampionWithRoster = Awaited
-  ReturnType<typeof getAllChampionsWithRosters>
->[number];
-
 export async function getAllChampionsWithRosters() {
   const champions = await db.teamSeason.findMany({
     where: { isChampion: true },
